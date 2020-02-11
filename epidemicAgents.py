@@ -5,14 +5,30 @@ from PyQt5.QtCore import Qt, pyqtSlot, QSize, QTimer
 from random import choice, randint, random
 from time import sleep
 
+class Desease(object):
+    Sane, Infected, Immune = range(3)
+    def __init__(self, infectivity, recoverability):
+        self.__transmission_rate = infectivity
+        self.__recovery_rate = recoverability
+        
+    def apply_to(self, agent, surrounding):
+        inf_neigh = 0
+        for neigh in surrounding:
+            inf_neigh += neigh.isInfected()
+        if agent.isInfected() and random() > self.__transmission_rate*inf_neigh - self.__recovery_rate:
+            agent.setSane()
+            if random()<.5:
+                agent.setImmune()
+        elif random() < self.__transmission_rate*inf_neigh*agent.vulnerability():
+            agent.setInfected()
+
 class Agent(object):
-    Sane = 0
-    Infected = 1
     SaneColor = (0,0,0)
     InfectedColor = (255, 0, 0)
+    ImmuneColor = (0, 255, 0)
     def __init__(self, parent, pos, size, infected = False):
         self.size = lambda: size
-        self.__state = Agent.Infected if infected else Agent.Sane
+        self.__state = Desease.Infected if infected else Desease.Sane
         self.__color = QColor(*(Agent.InfectedColor if infected else Agent.SaneColor))
         self.__parent = parent
         self.pos = lambda: pos
@@ -25,52 +41,59 @@ class Agent(object):
         self.__graphicItem.setBrush(QBrush(self.__color))
     
     def isInfected(self):
-        return self.__state == Agent.Infected
+        return self.__state == Desease.Infected
+    
+    def setColor(self, color):
+        self.__color = QColor(*color)
+        self.__update()
     
     def setInfected(self):
-        self.__state = Agent.Infected
-        self.__color = QColor(*Agent.InfectedColor)
-        self.__update()
+        self.__state = Desease.Infected
+        self.setColor(Agent.InfectedColor)
     
     def setSane(self):
-        self.__state = Agent.Sane
-        self.__color = QColor(*Agent.SaneColor)
-        self.__update()
+        self.__state = Desease.Sane
+        self.setColor(Agent.SaneColor)
+    
+    def setImmune(self):
+        self.__vulnerability = 0
+        self.setColor(Agent.ImmuneColor)
     
     def addNeighbor(self, agent):
         self.__neighbors.append(agent)
+        if self not in agent.neighbors():
+            agent.addNeighbor(self)
+            
+    def neighbors(self):
+        return self.__neighbors
+        
+    def vulnerability(self):
+        return self.__vulnerability
     
-    def time_step(self, transmission_rate, recovery_rate):
-        inf_neigh = 0
-        for neigh in self.__neighbors:
-            inf_neigh += neigh.isInfected()
-        if self.isInfected() and random() > transmission_rate*inf_neigh - recovery_rate:
-            self.setSane()
-        elif random() < transmission_rate*inf_neigh*self.__vulnerability:
-            self.setInfected()
     
 class Grid(object):
-    def __init__(self, size, cell_size, base_infected, infectivity = 0.2105, recoverability = 0.1, startAnimate = True, sec_between_frame = 1):
+    n = 1
+    def __init__(self, size, cell_size, base_infected, desease, startAnimate = True, sec_between_frame = 1):
         if type(size) == int:
             size = (size, size)
         self.size = lambda: size
         self.cell_size = lambda: cell_size
-        self.infectivity = lambda: infectivity
-        self.recoverability = lambda: recoverability
         self.__canvas = QGraphicsScene()
         self.__agents = []
+        self.__desease = desease
         offset = 0
+        cell_padding = .3
         for i in range(size[0]):
             for j in range(size[1]):
-                self.__agents.append(Agent(self.__canvas, (self.cell_size()*1.5*j + offset + randint(-int(self.cell_size()/2), int(self.cell_size()/2)), self.cell_size()*1.5*i + randint(-int(self.cell_size()/2), int(self.cell_size()/2))), self.cell_size())) #+ , 10*i + randint(-3, 3))))
-            offset = (offset+self.cell_size()/2)%(self.cell_size())
+                self.__agents.append(Agent(self.__canvas, (self.cell_size()*(1+cell_padding)*j + offset + 0*randint(-int(self.cell_size()/2), int(self.cell_size()/2)), self.cell_size()*(1+cell_padding)*((3/4)**(1/2))*i + 0*randint(-int(self.cell_size()/2), int(self.cell_size()/2))), self.cell_size()))
+            offset = 0 if offset else (offset+self.cell_size()*(1 + cell_padding)/2)
         for _ in range(base_infected):
             choice(self.__agents).setInfected()
         self.__calculateNeighbors()
         self.__viewObject = QGraphicsView(self.__canvas)
         self.__timer = None
+        self.timer_sec = lambda: sec_between_frame
         if startAnimate:
-            self.__timer_sec = sec_between_frame
             self.startAnimate(sec_between_frame)
             
     def handleKeyPressed(self, event, key_to_press, sec = None):
@@ -78,8 +101,8 @@ class Grid(object):
             if self.__timer:
                 self.__stopAnimate()
             else:
-                self.startAnimate(sec if sec else self.__timer_sec)
-         
+                self.startAnimate(sec if sec else self.timer_sec())
+    
          
     def startAnimate(self, sec):
         self.__timer = self.__viewObject.startTimer(int(1000*sec))
@@ -95,56 +118,41 @@ class Grid(object):
     
     def __calculateNeighbors(self):
         for index in range(len(self.__agents)):
-            if index == 0:
-                self.__agents[index].addNeighbor(self.__agents[index + 1])
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1]])
-            elif index == self.size()[1]-1:
-                self.__agents[index].addNeighbor(self.__agents[index - 1])
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1] - 1])
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1]])
-            elif index == (self.size()[0]-1)*self.size()[1]:
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1]])
-                self.__agents[index].addNeighbor(self.__agents[index + 1])
-            elif index == self.size()[0]*self.size()[1]-1:
-                self.__agents[index].addNeighbor(self.__agents[index - 1])
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1] - 1])
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1]])
-            elif index < self.size()[1]:
-                self.__agents[index].addNeighbor(self.__agents[index - 1])
-                self.__agents[index].addNeighbor(self.__agents[index + 1])
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1] - 1]) 
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1]]) 
-            elif index%self.size()[1] == 0:
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1]])
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1] + 1])
-                self.__agents[index].addNeighbor(self.__agents[index + 1])
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1] + 1])
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1]])
-            elif (index+1)%self.size()[1] == 0:
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1]])
-                self.__agents[index].addNeighbor(self.__agents[index - 1])
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1]])
-            elif index >= (self.size()[0]-1)*self.size()[1]:
-                self.__agents[index].addNeighbor(self.__agents[index - 1])
-                self.__agents[index].addNeighbor(self.__agents[index + 1])
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1] - 1])
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1]])
-            else:
+            offset = (index%(self.size()[1]*2))//self.size()[1]
+            if not (index < self.size()[1] 
+                or index%self.size()[1] == 0 
+                or (index+1)%self.size()[1] == 0 
+                or index >= (self.size()[0]-1)*self.size()[1]):
+# If not on side, else it will be added by the reciprocity of addNeighbor
                 self.__agents[index].addNeighbor(self.__agents[index + 1])
                 self.__agents[index].addNeighbor(self.__agents[index - 1])
-                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1] + 1])
+                self.__agents[index].addNeighbor(self.__agents[index - self.size()[1] + 2*offset - 1])
                 self.__agents[index].addNeighbor(self.__agents[index - self.size()[1]])
-                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1] + 1])
+                self.__agents[index].addNeighbor(self.__agents[index + self.size()[1] + 2*offset - 1])
                 self.__agents[index].addNeighbor(self.__agents[index + self.size()[1]])
 
     def time_step(self):
         for agent in self.__agents:
-            agent.time_step(self.infectivity(), self.recoverability())
+            self.__desease.apply_to(agent, agent.neighbors())
         
+    def tell(self, num):
+        n = self.__agents[num].neighbors()
+        self.__agents[num].setColor((255,0,255))
+        for nn in n:
+             nn.setColor((0,0,255))
+    
+    def noTell(self, num):
+        n = self.__agents[num].neighbors()
+        self.__agents[num].setColor((0,0,0))
+        for nn in n:
+            nn.setColor((0,0,0))
+    
+    
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    grid = Grid((100,250), 5, 25, sec_between_frame = .3)
+    grid = Grid((50,100), 10, 7, Desease(1/6, 0.1), sec_between_frame = .3)
     grid.view().keyPressEvent = lambda e: grid.handleKeyPressed(e, Qt.Key_Space)
+        
     grid.view().show()
     QMessageBox.information(grid.view(), 'Epidemic Agents', 'Press space to pause and resume')
     sys.exit(app.exec_())   
