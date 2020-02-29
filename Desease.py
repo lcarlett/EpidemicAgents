@@ -6,6 +6,9 @@ class Desease(object):
         self.__transmission_rate = infectivity
         self.__recovery_rate = recoverability
         
+    def infectionRadius(self):
+        return 15
+        
     def apply_to(self, agent, surrounding):
         inf_neigh = 0
         for neigh in surrounding:
