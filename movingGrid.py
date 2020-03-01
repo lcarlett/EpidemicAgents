@@ -18,7 +18,7 @@ class Tile(object):
         self.right = lambda: right
         self.bottom = lambda: bottom
         self.__content = [*content]
-#        self.rect = grid.canvas().addRect(left, bottom, right-left, top-bottom)
+        self.rect = grid.canvas().addRect(left, bottom, right-left, top-bottom)
         
         
     def addContent(self, *content):
@@ -38,7 +38,7 @@ class Tile(object):
     
     
 class Grid(object):
-    def __init__(self, size, number_agents, base_infected, base_immune, desease, startAnimate = False, sec_between_frame = 1):
+    def __init__(self, size, number_agents, base_infected, base_immune, desease, startAnimate = False, sec_between_frame = .1):
         if type(size) == int:
             size = (size, size)
         self.size = lambda: size

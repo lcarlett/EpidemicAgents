@@ -1,0 +1,1 @@
+from epidemicAgents import Agent
