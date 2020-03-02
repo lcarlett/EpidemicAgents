@@ -6,6 +6,7 @@ class Desease(object):
         self.__transmission_rate = infectivity
         self.__recovery_rate = recoverability
         self.infectionRadius = lambda: infectionRadius
+        self.__infected = 0
         
     def apply_to(self, agent, surrounding):
         inf_neigh = 0
@@ -13,10 +14,12 @@ class Desease(object):
             inf_neigh += neigh.isInfected()
         if agent.isInfected() and random() < self.__recovery_rate:
             agent.setSane()
+            self.__infected -= 1
 #            if random()<.5:
 #                agent.setImmune()
         elif binomial(self.__transmission_rate*agent.vulnerability(), inf_neigh):
             agent.setInfected()
+            self.__infected += 1 
 
 def binomial(p, n):
     """ Return True, False selon une binomiale (au moins un bon) de proba p pour n tirages.

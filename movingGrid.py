@@ -18,7 +18,7 @@ class Tile(object):
         self.right = lambda: right
         self.bottom = lambda: bottom
         self.__content = [*content]
-        self.rect = grid.canvas().addRect(left, bottom, right-left, top-bottom)
+#        self.rect = grid.canvas().addRect(left, bottom, right-left, top-bottom)
         
         
     def addContent(self, *content):
@@ -44,10 +44,10 @@ class Grid(object):
         self.size = lambda: size
         self.cell_size = lambda: desease.infectionRadius()
         self.__canvas = QGraphicsScene()
-        self.__desease = desease
         self.__viewObject = QGraphicsView(self.__canvas)
         self.__viewObject.setMouseTracking(True)
 #        self.__viewObject.mouseMoveEvent = self.__handleMouseMove
+        self.__desease = desease
         self.__cells = []
         for i in range(size[0]):
             for j in range(size[1]):
