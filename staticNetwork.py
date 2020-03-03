@@ -19,7 +19,10 @@ class PhysicsAgent(object):
            
     def pos(self):
         return self.__pos
-        
+    
+    def speed(self):
+        return self.__speed
+    
     def time_step(self):
         self.applyForce()
         self.__pos = add(self.__pos, self.__speed)
@@ -89,15 +92,23 @@ class Network(object):
                 self.__moving = False
         
     def __moveTime_step(self):
+        import time
+        tic = time.time()
         for link in self.__links:
             base = self.__agents[link[0]].pos()
             next = self.__agents[link[1]].pos()
-            self.__physics[link[0]].addForce(makeforce(next, base))
-            self.__physics[link[1]].addForce(makeforce(base, next))
+            self.__physics[link[0]].addForce(makeElastic(next, base))
+            self.__physics[link[1]].addForce(makeElastic(base, next))
+        for agent in self.__physics:
+            for other in self.__physics:
+                agent.addForce(makeRepulsion(agent.pos(), other.pos()))
+#            agent.addForce(makeFriction(agent))    
         for agent in self.__physics:
             agent.time_step()
         self.__replaceAgents()    
-        self.time_step()
+        if not self.__moving:
+            self.time_step()
+        print(time.time()-tic)
         
     def __replaceAgents(self):
         for index in range(len(self.__agents)):
@@ -118,20 +129,38 @@ class Network(object):
 def add(l1, l2):
     return (l1[0] + l2[0], l1[1] + l2[1])    
     
-def dist_sq(l):
-    return l[0]**2 + l[1]**2
+def cap(vec, magn):
+    return (min(vec[0], magn) if vec[0] > 0 else max(vec[0], -magn), min(vec[0], magn) if vec[0] > 0 else max(vec[0], -magn))
     
-def makeforce(next, base):
-    R = 4
+def dist(l):
+    return (l[0]**2 + l[1]**2)**(1/2)
+    
+def makeRepulsion(base, other):
+    vect = (base[0]-other[0], base[1]-other[1])
+    d = dist(vect)
+    if d == 0:
+        return (randint(-3,3), randint(-3,3))
+    else:
+        d_cube = d*d*d
+        return cap((vect[0]*2/d_cube, vect[1]*2/d_cube), 5)
+
+def makeFriction(agent):
+    friction = .04
+    sped = agent.speed()
+    d = dist(sped)
+    return (-d*sped[0]*friction, -d*sped[1]*friction)
+    
+def makeElastic(next, base):
+    R = 20
     vect = (next[0]-base[0], next[1]-base[1])
-    d = dist_sq(vect)**(1/2)
+    d = dist(vect)
     if d == 0:
         return (0, 0)
     else:
         n_vect = (vect[0]/d, vect[1]/d)
         if d < R:
-            magn = (R/d - 1)*0.001
+            magn = (R/d - 1)/R
         else:
-            magn = (d-R)**2 *0.001
-        magn = min(magn, 10)*.3
+            magn = ((d-R)/R)**2
+        magn = min(magn, 5) if magn > 0 else max(magn, -5)
         return (n_vect[0]*magn, n_vect[1]*magn)
