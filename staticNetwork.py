@@ -3,11 +3,35 @@ from PyQt5.QtGui import QPen, QColor
 from epidemicAgents import Agent
 from math import cos, sin, pi, ceil
 from random import choice, randint
+import numpy as np
 
+class Links:
+    def __init__(self, size):
+        self.size = size
+        self.__matrix = np.zeros((size, size), dtype = bool)
+            
+    def __iter__(self):
+        return iter(self.toList())        
+            
+    def addLink(self, link):
+        self.__matrix[link[0], link[1]] = self.__matrix[link[1], link[0]] = 1
+    
+    def getRandom(self):
+        return choice(self.toList())
+        
+    def print(self):
+        print(self.__matrix)
+    
+    def remove(self, link):
+        if self.__matrix[link[0], link[1]]:
+            self.__matrix[link[0], link[1]] = self.__matrix[link[1], link[0]] = 0
+    
+    def toList(self):
+        return [(i, j) for i in range(self.size) for j in range(i, self.size) if self.__matrix[i, j]]
 
-class PhysicsAgent(object):
-    def __init__(self, pos):
-        self.__pos = pos
+class PhysicsAgent(Agent):
+    def __init__(self, parent, pos):
+        super().__init__(parent, pos)
         self.__force = (0, 0)
         self.__speed = (0, 0)
     
@@ -16,16 +40,13 @@ class PhysicsAgent(object):
         
     def applyForce(self):
         self.__speed = add(self.__speed, self.__force)   
-           
-    def pos(self):
-        return self.__pos
     
     def speed(self):
         return self.__speed
     
-    def time_step(self):
+    def move(self):
         self.applyForce()
-        self.__pos = add(self.__pos, self.__speed)
+        self.setPos(add(self.pos, self.__speed))
         self.__force = (0, 0)
 
 class Network(object):
@@ -38,31 +59,29 @@ class Network(object):
         center = (size[0]/2, size[1]/2)
         self.__moving = False
         self.__agents = []
-        self.__links = []
-        self.__physics = []
+        self.__links = Links(number_agents)
         self.__lines = []
         self.__desease = desease
         for i in range(number_agents):
             pos = add(center, (radius*cos(2*pi*i/number_agents), radius*sin(2*pi*i/number_agents)))
-            self.__agents.append(Agent(self.__canvas, pos, size=10))
-            self.__physics.append(PhysicsAgent(pos))
+            self.__agents.append(PhysicsAgent(self.__canvas, pos))
         for index in range(number_agents):
             base_agent = self.__agents[index]
             for i in range(1, base_connections+1):
-                self.__links.append((index, (index+i)%number_agents))
+                self.__links.addLink((index, (index+i)%number_agents))
                 neighbor = self.__agents[(index+i)%number_agents]
                 base_agent.addNeighbor(neighbor)
         for _ in range(ceil(number_agents*base_connections*rewiring)):
-            temp = choice(self.__links)
+            temp = self.__links.getRandom()
             self.__links.remove(temp)
             self.__agents[temp[0]].removeNeighbor(self.__agents[temp[1]])
             neighbor_index = randint(0, number_agents-1)
-            self.__links.append((temp[0], neighbor_index))
+            self.__links.addLink((temp[0], neighbor_index))
             self.__agents[temp[0]].addNeighbor(self.__agents[neighbor_index])
         for link in self.__links:
-            base = self.__agents[link[0]].pos()
-            next = self.__agents[link[1]].pos()
-            self.__lines.append(self.__canvas.addLine(base[0], base[1], next[0], next[1], QPen(QColor(0,0,0,50)))) 
+            base = self.__agents[link[0]].pos
+            next = self.__agents[link[1]].pos
+            self.__lines.append((link[0], link[1], self.__canvas.addLine(base[0], base[1], next[0], next[1], QPen(QColor(0,0,0,50))))) 
         for _ in range(base_infected):
             choice(self.__agents).setInfected()
         for _ in range(base_immune):
@@ -94,30 +113,26 @@ class Network(object):
     def __moveTime_step(self):
         import time
         tic = time.time()
-        for link in self.__links:
-            base = self.__agents[link[0]].pos()
-            next = self.__agents[link[1]].pos()
-            self.__physics[link[0]].addForce(makeElastic(next, base))
-            self.__physics[link[1]].addForce(makeElastic(base, next))
-        for agent in self.__physics:
-            for other in self.__physics:
-                agent.addForce(makeRepulsion(agent.pos(), other.pos()))
-#            agent.addForce(makeFriction(agent))    
-        for agent in self.__physics:
-            agent.time_step()
+        for agent in self.__agents:
+            for other in agent.neighbors():
+                agent.addForce(makeElastic(other.pos, agent.pos))
+                other.addForce(makeElastic(agent.pos, agent.pos))
+            for other in self.__agents:
+                agent.addForce(makeRepulsion(agent.pos, other.pos))
+                other.addForce(makeRepulsion(other.pos, agent.pos))
+            agent.addForce(makeFriction(agent))    
+        for agent in self.__agents:
+            agent.move()
         self.__replaceAgents()    
         if not self.__moving:
             self.time_step()
         print(time.time()-tic)
         
     def __replaceAgents(self):
-        for index in range(len(self.__agents)):
-            self.__agents[index].setPos(self.__physics[index].pos())
-        for index in range(len(self.__links)):
-            link = self.__links[index]
-            base = self.__agents[link[0]].pos()
-            next = self.__agents[link[1]].pos()     
-            self.__lines[index].setLine(base[0], base[1], next[0], next[1])
+        for line in self.__lines:
+            base = self.__agents[line[0]].pos
+            next = self.__agents[line[1]].pos     
+            line[2].setLine(base[0], base[1], next[0], next[1])
     
     def time_step(self):
         for agent in self.__agents:
@@ -126,23 +141,29 @@ class Network(object):
     def view(self):
         return self.__viewObject
     
-def add(l1, l2):
-    return (l1[0] + l2[0], l1[1] + l2[1])    
+def add(*vecs, weights = None):
+    if not weights:
+        weights = [1]*len(vecs)
+    return (sum([vecs[i][0]*weights[i] for i in range(len(vecs))]), sum([vecs[i][1]*weights[i] for i in range(len(vecs))]))     
     
 def cap(vec, magn):
     return (min(vec[0], magn) if vec[0] > 0 else max(vec[0], -magn), min(vec[0], magn) if vec[0] > 0 else max(vec[0], -magn))
     
 def dist(l):
     return (l[0]**2 + l[1]**2)**(1/2)
-    
+
+R = 20
+
 def makeRepulsion(base, other):
     vect = (base[0]-other[0], base[1]-other[1])
     d = dist(vect)
     if d == 0:
-        return (randint(-3,3), randint(-3,3))
+        return (randint(-R//2,R//2), randint(-R//2,R//2))
+    elif d > R:
+        return (0, 0)
     else:
         d_cube = d*d*d
-        return cap((vect[0]*2/d_cube, vect[1]*2/d_cube), 5)
+        return cap((vect[0]*R/(2*d_cube), vect[1]*R/(2*d_cube)), 5)
 
 def makeFriction(agent):
     friction = .04
@@ -151,16 +172,12 @@ def makeFriction(agent):
     return (-d*sped[0]*friction, -d*sped[1]*friction)
     
 def makeElastic(next, base):
-    R = 20
     vect = (next[0]-base[0], next[1]-base[1])
     d = dist(vect)
-    if d == 0:
+    if d == 0 or d <= R:
         return (0, 0)
     else:
         n_vect = (vect[0]/d, vect[1]/d)
-        if d < R:
-            magn = (R/d - 1)/R
-        else:
-            magn = ((d-R)/R)**2
+        magn = ((d-R)/R)**2
         magn = min(magn, 5) if magn > 0 else max(magn, -5)
         return (n_vect[0]*magn, n_vect[1]*magn)

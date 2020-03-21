@@ -14,7 +14,7 @@ class Agent(object):
         self.__state = Desease.Infected if infected else Desease.Sane
         self.__color = QColor(*(Agent.InfectedColor if infected else Agent.SaneColor))
         self.__parent = parent
-        self.__pos = pos
+        self.pos = pos
         self.__graphicItem = parent.addEllipse(pos[0]-self.size()//2, pos[1]-self.size()//2, self.size(), self.size())
         self.__neighbors = set()
         self.__vulnerability = 1
@@ -59,7 +59,7 @@ class Agent(object):
             self.setColor(Agent.SaneColor)
     
     def setPos(self, newPos):
-        self.__pos = newPos
+        self.pos = newPos
         self.__graphicItem.setRect(newPos[0]-self.size()//2, newPos[1]-self.size()//2, self.size(), self.size())
     
     def setMoving(self, moving_dir):
@@ -85,7 +85,7 @@ class Agent(object):
         return self.__neighbors
     
     def pos(self):
-        return self.__pos
+        return self.pos
     
     def removeNeighbor(self, agent, removeSelf = True):   
         self.__neighbors.discard(agent)
