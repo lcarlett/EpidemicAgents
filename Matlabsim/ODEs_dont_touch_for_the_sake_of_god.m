@@ -1,51 +1,39 @@
 #Population constants
-b=1.03;     #birth rate
-d=1.09;     #death rate
-N=10000;    #initial population
-
+b=0.01;     #birth rate: probability of a specific individual to birth another (fuck women we clone ourselves) in a generation
+d=0.01;     #death rate: probability of a specific individual to yeet themselves from the living in a generation
+N= 10000;     #initial population
 
 
 #Disease constants
-lambda=0.002;    #force of infection
-g=0.75;           # ?????
+lambda=0.5;    #force of infection = 'probability that a specific susceptible individual gets sick after a generation'
+g=0.02;        #recovery rate
+
+#Initial conditions setup
+I=  1  ;  #Initial number of ill individuals  #does not work as one would intuitively expec - this thing is fucking useless lmao
+R=  0  ;    #Initial number of recovered/immunized individuals
+S=  N-I;    #Initial number of susceptible individuals
 
 
-
-#initial conditions for ODE specifically
-
-S=  N-1; #Initial number of susceptible people
-I=  1  ; #Initial number of ill people
-R=  0  ; #Initial number of recovered/immunized people
-
-#Time parameters
+#ODE parameters setup
 t0 = 0 ;      #Initial time of the solution
-tf = 20;     #Final time of the solution
+tf = 200;     #Final time of the solution
 
-
-
-#RESOLUTION EQUATION DIFFERENTIELLE. DON TACCH
 tspan = [t0,tf];
 Y0 = [S,I,R];
-[ti,uai] = ode23(@(t,Y) SIR_ODE(t,Y,b,d,N,lambda,g),tspan,Y0);
 
+
+#ODE solving
+[ti,uai] = ode45(@(t,Y) SIR_ODE(t,Y,b,d,N,lambda,g),tspan,Y0);
 
 
 #Plot component of solution
-#plot(ti,uai(:,1));      #plot S
-#plot(ti,uai(:,2));      #plot I
-#plot(ti,uai(:,3));      #plot R
-l = 1;
+figure
+hold on;
+title('SIR model simulations');
+xlabel('time (days)');
+ylabel('people');
 
-
-while l <tf
-  #plot3(uai(l,1),uai(l,2),uai(l,3),col ='green');
-  #hold on;
-  try
-    scatter(uai(l,1));
-    #scatter3(uai(l,:));
-  end
-  l = l+1;
-  hold on;
-#  pause(0.1);
-  end
-  #THE THING WORKS, BUT CONSTANTS ARE FULLY RANDOMIZED NONSENSE; PICK THEM CAREFULLY
+plot( ti, uai(:,1), 'r');    #plot S
+plot(ti,uai(:,2), 'g');      #plot I
+plot(ti,uai(:,3), 'b');      #plot R
+legend('Susceptible', 'Infected', 'Recovered')
