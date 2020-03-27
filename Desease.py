@@ -2,7 +2,7 @@ from random import random
 
 class Desease(object):
     Sane, Infected, Immune = range(3)
-    def __init__(self, infectivity, recoverability, infectionRadius):
+    def __init__(self, infectivity, recoverability, infectionRadius = 1):
         self.__transmission_rate = infectivity
         self.__recovery_rate = recoverability
         self.infectionRadius = lambda: infectionRadius
@@ -20,6 +20,9 @@ class Desease(object):
         elif binomial(self.__transmission_rate*agent.vulnerability(), inf_neigh):
             agent.setInfected()
             self.__infected += 1 
+    
+    def getTotalInfected(self):
+        return self.__infected
 
 def binomial(p, n):
     """ Return True, False selon une binomiale (au moins un bon) de proba p pour n tirages.

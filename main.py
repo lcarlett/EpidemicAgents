@@ -2,20 +2,21 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtCore import Qt
 from Desease import Desease
-from movingGrid import Grid
-#from staticHexGrid import Grid
+from movingGrid import Grid as GGrid
+from staticHexGrid import Grid as HGrid
 from staticNetwork import Network
+from epidemicAgents import Agent
 
 app = QApplication(sys.argv)
 # good medium values Desease(1/8, 0.05), 100 base infected
-#grid = Grid(size = (50,100), cell_size = 10, base_infected = 100 , base_immune = 0, desease = Desease(1/18, 0.20, None), sec_between_frame = .2)
+grid = HGrid(QParent = None, size = (750,1500), number_agents = 5000, base_infected = 100 , base_immune = 0, desease = Desease(1/18, 0.20), sec_between_frame = .2)
 
-#grid = Grid(size = (90, 90), number_agents = 2000, base_infected = 100 , base_immune = 0, desease = Desease(1/6,0.15,15), startAnimate = True)    
+#grid = GGrid(QParent = None, size = (800, 800), number_agents = 2000, base_infected = 100 , base_immune = 0, desease = Desease(1/6,0.15,15), startAnimate = True, sec_between_frame = .05)    
 
-grid = Network(size = (800, 800), number_agents = 100, base_connections = 2, rewiring = 0.1, base_infected = 10 , base_immune = 20, desease = Desease(1/6, 0, None), sec_between_frame = .1)
+#grid = Network(QParent = None, size = (800, 800), number_agents = 500, base_connections = 2, rewiring = 0.1, base_infected = 10 , base_immune = 20, desease = Desease(1/6, 0), sec_between_frame = .1)
 
-grid.view().keyPressEvent = lambda e: grid.handleKeyPressed(e, Qt.Key_Space)
-grid.view().show()
+grid.keyPressEvent = lambda e: grid.handleKeyPressed(e, Qt.Key_Space)
+grid.show()
 
 #    QMessageBox.information(grid.view(), 'Epidemic Agents', 'Press space to pause and resume')
 
