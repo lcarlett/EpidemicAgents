@@ -1,9 +1,12 @@
 from abc import abstractmethod
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsView
+from PyQt5.QtCore import pyqtSignal
 from random import choice
 
 class AbstractGrid(QGraphicsView):
-    def __init__(self, QParent, size, number_agents, base_infected, base_immune, desease, startAnimate = False, sec_between_frame = .1):
+    timeStep = pyqtSignal(tuple)
+    
+    def __init__(self, QParent, size, number_agents, base_infected, base_immune, desease, sec_between_frame = .1):
         super().__init__(QParent)
         if type(size) == int:
             size = (size, size)
@@ -31,21 +34,28 @@ class AbstractGrid(QGraphicsView):
         for _ in range(self.base_immune()):
             choice(self._agents).setImmune()
             
-    def _stopAnimate(self):
-        self.killTimer(self._timer)
-        self._timer = None
-        
     def handleKeyPressed(self, event, key_to_press, sec = None):
         if event.key() == key_to_press:
             if self._timer:
-                self._stopAnimate()
+                self.stopAnimate()
             else:
                 self.startAnimate(sec if sec else self.timer_sec())
-            
-    def startAnimate(self, sec):
+    
+    def startAnimate(self, sec = None):
+        if not sec:
+            sec = self.timer_sec()
+        else:
+            self.timer_sec = lambda: sec
         self._timer = self.startTimer(int(1000*sec))
         self.timerEvent = lambda e: self.time_step()   
+
+    def stopAnimate(self):
+        self.killTimer(self._timer)
+        self._timer = None
         
-    def time_step(self):
-        for agent in self._agents:
+    def time_step(self, container = None):
+        if not container:
+            container = self._agents
+        for agent in container:
             self._desease.apply_to(agent, agent.neighbors())
+        self.timeStep.emit(self._desease.getTotals())

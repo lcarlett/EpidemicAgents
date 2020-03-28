@@ -8,6 +8,7 @@ class Agent(object):
     SaneColor = (0,0,0)
     InfectedColor = (255, 0, 0)
     ImmuneColor = (0, 255, 0)
+    RecoveredColor = (150, 150, 150)
     
     def __init__(self, parent, pos, size=10, infected = False):
         self.size = lambda: size
@@ -58,6 +59,11 @@ class Agent(object):
             self.setColor(Agent.ImmuneColor)
         else:
             self.setColor(Agent.SaneColor)
+    
+    def setRecovered(self, recovery = True):
+        self.setImmune(recovery)
+        if recovery:
+            self.setColor(Agent.RecoveredColor)
     
     def setPos(self, newPos):
         self.__pos = newPos

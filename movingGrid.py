@@ -8,7 +8,7 @@ from math import cos, sin, pi, ceil
 class Tile(object):
     _maxContent = 6
     
-    def __init__(self, grid, left, top, right, bottom, *content):
+    def __init__(self, grid, left, top, right, bottom, *content, debug = False):
         super().__init__()
         self.parent = lambda: grid
         self.left = lambda: left
@@ -16,7 +16,8 @@ class Tile(object):
         self.right = lambda: right
         self.bottom = lambda: bottom
         self._content = [*content]
-        self.rect = grid.canvas().addRect(left, bottom, right-left, top-bottom)
+        if debug:
+            self.rect = grid.canvas().addRect(left, bottom, right-left, top-bottom)
         
         
     def addContent(self, *content):
@@ -36,8 +37,9 @@ class Tile(object):
     
     
 class Grid(AbstractGrid):
-    def __init__(self, **kwargs):
+    def __init__(self, debug = False, **kwargs):
         self._cells = []
+        self.debug = lambda: debug
         self.cell_size = lambda: kwargs['desease'].infectionRadius()
         super().__init__(**kwargs)
 #        self.setMouseTracking(True)
@@ -48,13 +50,15 @@ class Grid(AbstractGrid):
         self._grid_size = (self.size()[0]//self.cell_size(), self.size()[1]//self.cell_size())
         for i in range(self._grid_size[0]):
             for j in range(self._grid_size[1]):
-                self._cells.append(Tile(self, i*self.cell_size(), j*self.cell_size(), (i+1)*self.cell_size(),(j+1)*self.cell_size())) 
+                self._cells.append(Tile(self, i*self.cell_size(), j*self.cell_size(), (i+1)*self.cell_size(),(j+1)*self.cell_size(), debug = self.debug())) 
         for _ in range(self.number_agents()):
             x, y = randint(0, self._grid_size[0]*self.cell_size()-1), randint(0, self._grid_size[1]*self.cell_size()-1)
             index = x//self.cell_size() + (y//self.cell_size()) * self._grid_size[0]
             agent = Agent(self._canvas, (x, y), size = 20*min(self.size()[0], self.size()[1])/self.number_agents())
             self._cells[index].addContent(agent)
-            agent.setMoving((randint(-5,5), randint(-5, 5)))
+            direction = (randint(-5,5), randint(-5, 5))
+#            self._canvas.addLine(x, y, x+direction[0]*5, y+direction[1]*5)
+            agent.setMoving(direction)
 #        self.el = self._cells[0].content()[0]
 #        self.el.setColor((255,0,255))
 #        self.el.size = lambda: 20
@@ -128,14 +132,11 @@ class Grid(AbstractGrid):
                         agent.resetNeighbors()
                         for a in self.getCellsContent((I-1, I+1), (J-1, J+1)):
                            agent.addNeighbor(a)
-                self._desease.apply_to(agent, agent.neighbors())
         for agent in toadd:
             x, y = agent.pos()
-            try:
-                index = x//self.cell_size() + (y//self.cell_size()) * self._grid_size[0]
-                self._cells[index].addContent(agent)
-            except:
-                print(index)
+            index = x//self.cell_size() + (y//self.cell_size()) * self._grid_size[0]
+            self._cells[index].addContent(agent)
+        super().time_step([a for cell in self._cells for a in cell.content()])
 #        self.el.illuminateNeighbors(.8)
     
     def canvas(self):
