@@ -7,7 +7,7 @@ rawdata = fscanf(fileID, '%f');
 N= rawdata(1);            #initial population
 lambda= rawdata(2);       #force of infection, linked in some way with R_0 (compute or y e e t ?)
 g= rawdata(3);            #recovery rate
-tf = rawdata(4);          #Final time of the solution
+tf = rawdata(4);          #Final time of the solution (this sounds much more nazi that I tought it would)
 
 
 if length(rawdata) > 4
