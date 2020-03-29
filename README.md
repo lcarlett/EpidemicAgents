@@ -9,4 +9,3 @@ To start application "python3 main.py"
         Matplotlib
         Networkx
     octave/matlab distribution
-            

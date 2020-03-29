@@ -1,5 +1,5 @@
 import sys
-sys.path.append("Display/")
+sys.path.insert(1,"Display/")
 from ui_StartOptionsDialog import Ui_StartOptionsDialog
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtGui import QPixmap

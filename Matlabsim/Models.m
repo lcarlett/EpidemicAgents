@@ -1,4 +1,4 @@
-file = fopen('../Matlabsim/values.txt', 'r');
+file = fopen('Matlabsim/values.txt', 'r');
 formatSpec = '%f';
 values = fscanf(file, formatSpec);
 fclose(file);
@@ -60,6 +60,6 @@ if (values(1) != 0)
 else
     legend('Susceptible', 'Infected');
 endif
-saveas(gcf, "result.png");
+saveas(gcf, "Pythonapp/img/result.png")
  
 

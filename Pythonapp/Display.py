@@ -44,7 +44,7 @@ class Display(QMainWindow):
     
     def handleContinuous(self, dic):
         self.setFixedSize(QSize(CANVAS_SIZE[0]*1.1, CANVAS_SIZE[1]*1.1))
-        with open("../Matlabsim/values.txt", 'w') as values:
+        with open("Matlabsim/values.txt", 'w') as values:
             values.write(str(dic["name"])+"\n")
             values.write(str(0.002)+"\n")                               # Birth rate
             values.write(str(0.001)+"\n")                               # Death rate
@@ -54,10 +54,10 @@ class Display(QMainWindow):
             values.write(str(1-dic["desease"]["immunity_rate"])+"\n")   # Immunization loss rate
             values.write(str(dic["grid"]["base_infected"])+"\n")        # Initial number of ill
             values.write(str(dic["grid"]["base_immune"])+"\n")          # Initial number of immunized
-        os.system("octave  --path ../Matlabsim ../Matlabsim/Models.m")
+        os.system("octave --path Matlabsim/ Matlabsim/Models.m")
         centralWidget = QLabel()
         centralWidget.setScaledContents(True)
-        centralWidget.setPixmap(QPixmap("../Matlabsim/result.png"))
+        centralWidget.setPixmap(QPixmap("Pythonapp/img/result.png"))
         self.setCentralWidget(centralWidget)
         
     def handleNew(self):
