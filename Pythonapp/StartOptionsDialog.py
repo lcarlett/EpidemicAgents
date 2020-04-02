@@ -1,13 +1,17 @@
 import sys
 sys.path.insert(1,"Display/")
 from ui_StartOptionsDialog import Ui_StartOptionsDialog
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QPushButton
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import pyqtSignal
 from AbstractGrid import AbstractGrid
+from examples import examples
 
 IMAGES = {"Static Grid": "img/static.png", "Moving Grid": "img/moving.png", "Small-world Network": "img/network.png"}
 CANVAS_SIZE = (600, 600)
+
+def getExecutable(func, *args):
+    return lambda: func(*args)
 
 class NotFilledFormError(Exception):
     def __init__(self, msg = ""):
@@ -21,20 +25,15 @@ class StartOptionsDialog(QDialog):
         super().__init__(QParent)
         self.ui = Ui_StartOptionsDialog()
         self.ui.setupUi(self)
-        self.ui.buttons_widget.enterEvent = lambda e: self.aboutToClick(e, True)
-        self.ui.buttons_widget.leaveEvent = lambda e: self.aboutToClick(e, False)
+        for index in range(len(examples)):
+            name = examples[index][0]
+            values = examples[index][1]
+            temp = QPushButton(name)
+            self.ui.examples_layout.addWidget(temp, index%3, index//3)
+            temp.pressed.connect(getExecutable(self.setValues, values))
     
-    def aboutToClick(self, e, entering):
-        if entering:
-            text = "Note: "
-            if self.ui.agents_spinbox.value() > 2000:
-                text += "A discrete solution may not be able to handle this much agents"
-            elif self.ui.agents_spinbox.value() < 10000:
-                text += "\nA continuous solution can handle a lot more agents"
-            self.ui.note_label.setText(text)
-        else:
-            self.ui.note_label.setText("Or")
-            
+    def accept(self):
+        self.discrete_go_pressed()
     
     def createDict(self, need_struc):
         desease = {}
@@ -52,7 +51,7 @@ class StartOptionsDialog(QDialog):
         if self.ui.immunizing_checkbox.checkState() == 0:
             immunity = 0
         elif self.ui.immunizing_checkbox.checkState() == 1:
-            immunity = 1 - 1/self.ui.immune_time_slider.value()
+            immunity = .98
         else:
             immunity = 1
         desease["immunity_rate"] = immunity
@@ -67,7 +66,6 @@ class StartOptionsDialog(QDialog):
         out["recovery"] = self.ui.recovery_spinbox.value()
         out["immune"] = self.ui.immune_spinbox.value()
         out["immunizing"] = self.ui.immunizing_checkbox.checkState()
-        out["immune_time"] = self.ui.immune_time_slider.value()
     
     def load_asked(self):
         pass
@@ -80,7 +78,6 @@ class StartOptionsDialog(QDialog):
             self.ui.recovery_spinbox.setValue(dic["recovery"])
             self.ui.immune_spinbox.setValue(dic["immune"])
             self.ui.immunizing_checkbox.setCheckState(dic["immunizing"])
-            self.ui.immune_time_slider.setValue(dic["immune_time"])
         
     def structure_selected(self,new_str):
         if str(new_str) == "Static Grid":
@@ -100,29 +97,29 @@ class StartOptionsDialog(QDialog):
             
     def immunizing_state_changed(self, state):
         if state == 0:
-            self.ui.immune_time_slider.setEnabled(False)
-            self.ui.model_type_label.setText("SIS model")
+            texts = ["No", "SIS model"] 
         elif state == 1:
-            self.ui.immune_time_slider.setEnabled(True)
-            self.ui.model_type_label.setText("SIRS model")
+            texts = ["Partial", "SIRS model"]
         elif state == 2:
-            self.ui.immune_time_slider.setEnabled(False)
-            self.ui.model_type_label.setText("SIR model")
+            texts = ["Yes", "SIR model"]
+        self.ui.yes_no_immunizing_label.setText(texts[0])
+        self.ui.model_type_label.setText(texts[1])
     
     def discrete_go_pressed(self):
         try:
             dic = self.createDict(True)
             dic["name"] = str(self.ui.structure_combo.currentText())
             self.discrete.emit(dic)
-            self.accept()
+            super().accept()
         except NotFilledFormError:
             self.ui.structure_combo.setStyleSheet("background-color: rgb(204, 0, 0)")
         
     def continuous_go_pressed(self):
         dic = self.createDict(False)
+        dic["grid"]["number_agents"] = 1000000
         dic["name"] = self.ui.immunizing_checkbox.checkState()
         self.continuous.emit(dic)
-        self.accept()
+        super().accept()
         
     def test_desease_pressed(self):
         pass
