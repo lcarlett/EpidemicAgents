@@ -43,7 +43,7 @@ class Display(QMainWindow):
            self.canvas.startAnimate()
     
     def handleContinuous(self, dic):
-        self.setFixedSize(QSize(CANVAS_SIZE[0]*1.1, CANVAS_SIZE[1]*1.1))
+        self.setMinimumSize(QSize(CANVAS_SIZE[0]*1.1, CANVAS_SIZE[1]*1.1))
         with open("Matlabsim/values.txt", 'w') as values:
             values.write(str(dic["name"])+"\n")
             values.write(str(0.002)+"\n")                               # Birth rate
@@ -77,9 +77,10 @@ class Display(QMainWindow):
             play_action.setText("Play")
             play_action.setShortcut(QKeySequence("R"))
         QGuiApplication.setOverrideCursor(QCursor(Qt.WaitCursor));
-        self.setFixedSize(QSize(CANVAS_SIZE[0]*1.1, CANVAS_SIZE[1]*1.4*1.1))
+        self.setMinimumSize(QSize(CANVAS_SIZE[0]*1.1, CANVAS_SIZE[1]*1.4*1.1))
         centralWidget = QWidget()
         self.canvas = GRIDS[dic["name"]](**(dic["grid"]), size = CANVAS_SIZE, QParent = None, desease = Desease(**(dic["desease"])))
+        self.canvas.keyPressEvent = lambda e: self.canvas.handleKeyPressed(e, Qt.Key_Space)
         self.plot = DeseasePlot((CANVAS_SIZE[0], CANVAS_SIZE[1]/3), dic["grid"]["number_agents"])
         self.canvas.startAnimate()
         self.canvas.timeStep.connect(self.plot.updatePlot)

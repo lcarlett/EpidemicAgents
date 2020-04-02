@@ -7,7 +7,7 @@ from PyQt5.QtCore import pyqtSignal
 from AbstractGrid import AbstractGrid
 from examples import examples
 
-IMAGES = {"Static Grid": "img/static.png", "Moving Grid": "img/moving.png", "Small-world Network": "img/network.png"}
+IMAGES = {"Static Grid": "Pythonapp/img/static.png", "Moving Grid": "Pythonapp/img/moving.png", "Small-world Network": "Pythonapp/img/network.png"}
 CANVAS_SIZE = (600, 600)
 
 def getExecutable(func, *args):

@@ -50,8 +50,9 @@ class AbstractGrid(QGraphicsView):
         self.timerEvent = lambda e: self.time_step()   
 
     def stopAnimate(self):
-        self.killTimer(self._timer)
-        self._timer = None
+        if self._timer:
+            self.killTimer(self._timer)
+            self._timer = None
         
     def time_step(self, container = None):
         if not container:

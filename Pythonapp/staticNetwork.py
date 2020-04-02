@@ -20,6 +20,14 @@ class Links:
         self._matrix[link[0], link[1]] = self._matrix[link[1], link[0]] = 1
         self._graph.add_edge(link[0], link[1])
     
+    def clustering(self):
+        m_2 = self._matrix @ self._matrix
+        m_3 = m_2 @ self._matrix
+        return np.trace(m_3)/(m_2.sum() - np.trace(m_2))
+    
+    def meanDist(self):
+        return nx.average_shortest_path_length(self._graph)
+    
     def getRandom(self):
         return choice(self.toList())
         
@@ -70,3 +78,18 @@ class Network(AbstractGrid):
             next = self._agents[link[1]].pos()
             self._canvas.addLine(base[0], base[1], next[0], next[1], QPen(QColor(0,0,0,50)))
             self._agents[link[0]].addNeighbor(self._agents[link[1]])
+            
+if __name__ == '__main__':
+    from PyQt5.QtWidgets import QApplication
+    import sys
+    from PyQt5.QtCore import Qt
+    from Desease import Desease
+    from movingGrid import Grid
+
+    app = QApplication(sys.argv)
+
+    grid = Network(QParent = None, size = (800, 800), number_agents = 400, base_connections = 2, rewiring = 0.4, base_infected = 100 , base_immune = 20, desease = Desease(1/3, 0.2, None))
+    grid.keyPressEvent = lambda e: grid.handleKeyPressed(e, Qt.Key_Space)
+    grid.show()
+    print(grid._links.clustering(), grid._links.meanDist())
+    sys.exit(app.exec_())
