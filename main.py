@@ -2,10 +2,12 @@
 
 import sys
 from PyQt5.QtWidgets import QApplication
+sys.path.append("Pythonapp/Display")
+sys.path.append("Pythonapp/Grids/")
 sys.path.append("Pythonapp/")
 from Display import Display
 
 app = QApplication(sys.argv)
 d = Display("Epidemic Agents")
 
-sys.exit(app.exec_())   
+sys.exit(app.exec_())

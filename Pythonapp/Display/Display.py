@@ -23,7 +23,7 @@ class Display(QMainWindow):
         self.start_action.triggered.connect(self.handleNew)
         self.dialog.show()
         self.canvas = None
-        
+
     def initUi(self):
         self.setWindowTitle(self.title)
         self.toolBar = super().addToolBar('Settings')
@@ -37,11 +37,11 @@ class Display(QMainWindow):
         quit_action.setShortcut(QKeySequence("Ctrl+W"))
         quit_action.triggered.connect(self.close)
         self.show()
-     
+
     def handleClosedDialog(self):
         if self.canvas:
            self.canvas.startAnimate()
-    
+
     def handleContinuous(self, dic):
         self.setMinimumSize(QSize(CANVAS_SIZE[0]*1.1, CANVAS_SIZE[1]*1.1))
         with open("Matlabsim/values.txt", 'w') as values:
@@ -59,12 +59,12 @@ class Display(QMainWindow):
         centralWidget.setScaledContents(True)
         centralWidget.setPixmap(QPixmap("Pythonapp/img/result.png"))
         self.setCentralWidget(centralWidget)
-        
+
     def handleNew(self):
         if self.canvas:
             self.canvas.stopAnimate()
         self.dialog.show()
-        
+
     def handleDiscrete(self, dic):
         pause_action = None
         if not self.canvas:
@@ -92,4 +92,4 @@ class Display(QMainWindow):
         QGuiApplication.restoreOverrideCursor();
         if pause_action:
             pause_action.triggered.connect(self.canvas.stopAnimate)
-            play_action.triggered.connect(self.canvas.startAnimate)    
+            play_action.triggered.connect(self.canvas.startAnimate)

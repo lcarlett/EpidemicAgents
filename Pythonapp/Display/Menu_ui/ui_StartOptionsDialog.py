@@ -131,7 +131,7 @@ class Ui_StartOptionsDialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.agents_spinbox.sizePolicy().hasHeightForWidth())
         self.agents_spinbox.setSizePolicy(sizePolicy)
-        self.agents_spinbox.setMinimum(100)
+        self.agents_spinbox.setMinimum(10)
         self.agents_spinbox.setMaximum(1000000)
         self.agents_spinbox.setSingleStep(100)
         self.agents_spinbox.setProperty("value", 1000)

@@ -290,7 +290,7 @@
                   </sizepolicy>
                  </property>
                  <property name="minimum">
-                  <number>100</number>
+                  <number>10</number>
                  </property>
                  <property name="maximum">
                   <number>1000000</number>
@@ -499,8 +499,8 @@
    <slot>structure_selected(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>154</x>
-     <y>301</y>
+     <x>176</x>
+     <y>239</y>
     </hint>
     <hint type="destinationlabel">
      <x>14</x>
@@ -515,12 +515,12 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>609</x>
-     <y>494</y>
+     <x>562</x>
+     <y>379</y>
     </hint>
     <hint type="destinationlabel">
-     <x>820</x>
-     <y>495</y>
+     <x>577</x>
+     <y>380</y>
     </hint>
    </hints>
   </connection>
@@ -531,8 +531,8 @@
    <slot>immunizing_state_changed(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>176</x>
-     <y>195</y>
+     <x>185</x>
+     <y>161</y>
     </hint>
     <hint type="destinationlabel">
      <x>287</x>
@@ -548,7 +548,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>90</x>
-     <y>584</y>
+     <y>470</y>
     </hint>
     <hint type="destinationlabel">
      <x>86</x>
@@ -563,8 +563,8 @@
    <slot>discrete_go_pressed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>701</x>
-     <y>530</y>
+     <x>587</x>
+     <y>431</y>
     </hint>
     <hint type="destinationlabel">
      <x>468</x>
@@ -579,8 +579,8 @@
    <slot>continuous_go_pressed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>740</x>
-     <y>571</y>
+     <x>587</x>
+     <y>462</y>
     </hint>
     <hint type="destinationlabel">
      <x>574</x>
